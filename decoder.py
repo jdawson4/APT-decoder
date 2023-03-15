@@ -49,4 +49,5 @@ for p in range(data_am.shape[0]):
 
 image = image.resize((w, 4*h))
 plt.imshow(image)
+plt.savefig('images/img.png', dpi=500)
 plt.show()
