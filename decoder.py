@@ -6,24 +6,24 @@
 import scipy.io.wavfile as wav
 import scipy.signal as signal
 import numpy as np
-import matplotlib.pyplot as plt
 
 from PIL import Image
 
 fs, data = wav.read('recordings/noaa18-march-9.wav')
 if len(data.shape)==2:
+    print(f"Data in two channels, using the first one")
     data = data[:,0] # only need 1 channel
-#data_crop = data[20*fs:21*fs]
-#plt.figure(figsize=(12,4))
-#plt.plot(data_crop)
-#plt.xlabel("Samples")
-#plt.ylabel("Amplitude")
-#plt.title("Signal")
-#plt.show()
 
-resample = 4
-data = data[::resample]
-fs = fs//resample
+expectedRate = 11025
+if fs!=expectedRate:
+    print(f"Resampling from {fs} to {expectedRate}")
+    factor = fs // expectedRate
+    stop = (len(data) // factor) * factor
+    # resample to new rate:
+    data = data[0:stop:factor]
+    fs = expectedRate
+else:
+    print(f"No need to resample, recording is already at {fs}")
 
 def hilbert(data):
     analytical_signal = signal.hilbert(data)
@@ -35,7 +35,7 @@ frame_width = int(0.5*fs)
 w, h = frame_width, data_am.shape[0]//frame_width
 image = Image.new('RGB', (w, h))
 px, py = 0, 0
-for p in range(data_am.shape[0]):
+for p in range((data_am.shape[0]//frame_width) * frame_width):
     lum = int(data_am[p]//32 - 32)
     if lum < 0: lum = 0
     if lum > 255: lum = 255
