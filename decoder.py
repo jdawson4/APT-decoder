@@ -10,8 +10,10 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 
-fs, data = wav.read('recordings/noaa18-march-9-resampled.wav')
-data_crop = data[20*fs:21*fs]
+fs, data = wav.read('recordings/noaa18-march-9.wav')
+if len(data.shape)==2:
+    data = data[:,0] # only need 1 channel
+#data_crop = data[20*fs:21*fs]
 #plt.figure(figsize=(12,4))
 #plt.plot(data_crop)
 #plt.xlabel("Samples")
@@ -37,7 +39,7 @@ for p in range(data_am.shape[0]):
     lum = int(data_am[p]//32 - 32)
     if lum < 0: lum = 0
     if lum > 255: lum = 255
-    image.putpixel((px, py), (0, lum, 0))
+    image.putpixel((px, py), (lum, lum, lum))
     px += 1
     if px >= w:
         if (py % 50) == 0:
@@ -47,7 +49,8 @@ for p in range(data_am.shape[0]):
         if py >= h:
             break
 
-image = image.resize((w, 4*h))
-plt.imshow(image)
-plt.savefig('images/img.png', dpi=500)
-plt.show()
+#image = image.resize((w, 4*h))
+#plt.imshow(image)
+#plt.savefig('images/img.png', dpi=500)
+#plt.show()
+image.save('images/img.png')
