@@ -18,12 +18,17 @@ expectedRate = 11025
 if fs!=expectedRate:
     print(f"Resampling from {fs} to {expectedRate}")
     factor = fs // expectedRate
-    stop = (len(data) // factor) * factor
+    stop = ((len(data) // factor) * factor) - factor
     # resample to new rate:
     data = data[0:stop:factor]
     fs = expectedRate
 else:
     print(f"No need to resample, recording is already at {fs}")
+
+print(data.shape)
+
+print(f"Making sure that data length is a factor of {expectedRate}")
+data = data[0:expectedRate * ((data.shape[0])//expectedRate)]
 
 def hilbert(data):
     analytical_signal = signal.hilbert(data)
@@ -31,7 +36,14 @@ def hilbert(data):
     return amplitude_envelope
 data_am = hilbert(data)
 
+print(data_am.shape)
+
 frame_width = int(0.5*fs)
+print(f"Making sure that data length is a factor of {frame_width}")
+data_am = data_am[0:frame_width * ((data_am.shape[0])//frame_width)]
+
+print(data_am.shape)
+
 w, h = frame_width, data_am.shape[0]//frame_width
 image = Image.new('RGB', (w, h))
 px, py = 0, 0
@@ -49,7 +61,7 @@ for p in range((data_am.shape[0]//frame_width) * frame_width):
         if py >= h:
             break
 
-#image = image.resize((w, 4*h))
+image = image.resize((w, 4*h))
 #plt.imshow(image)
 #plt.savefig('images/img.png', dpi=500)
 #plt.show()
