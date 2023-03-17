@@ -7,7 +7,7 @@ import scipy.io.wavfile as wav
 import scipy.signal as signal
 import numpy as np
 
-from os import listdir, path
+from os import listdir, path, makedirs
 
 from PIL import Image
 from PIL import ImageEnhance
@@ -67,7 +67,7 @@ def modified(filename):
 
     # not sure if I love this. It might filter out some noise, but we'll
     # deliberately be clipping out useful signal.
-    data_am = np.clip(data_am, np.percentile(data_am, 0.0), np.percentile(data_am, 90.0))
+    #data_am = np.clip(data_am, np.percentile(data_am, 0.0), np.percentile(data_am, 90.0))
     # these bounds matter a lot! Mess around with this ^!
     
     # simply scale everything:
@@ -137,8 +137,13 @@ if __name__=='__main__':
     #filename = 'recordings/noaa18-march-9.wav'
     #original(filename)
     #modified(filename)
-    folder = 'recordings'
-    for filename in listdir(folder):
+    recordings = 'recordings'
+    outputRawImages = 'rawImages'
+    if not path.isdir(recordings):
+        makedirs(recordings)
+    if not path.isdir(outputRawImages):
+        makedirs(outputRawImages)
+    for filename in listdir(recordings):
         print('\n')
-        f = path.join(folder, filename)
+        f = path.join(recordings, filename)
         modified(f)
