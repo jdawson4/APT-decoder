@@ -10,9 +10,9 @@ import numpy as np
 from os import listdir, path, makedirs
 
 from PIL import Image
-from PIL import ImageEnhance
+#from PIL import ImageEnhance
 
-def modified(filename):
+def modified(filename, outputFolder):
     print('Reading', filename)
     fs, data = wav.read(filename)
     if len(data.shape)==2:
@@ -90,10 +90,10 @@ def modified(filename):
     if image.mode != 'RGB':
         image = image.convert('RGB')
 
-    print("Enhancing contrast")
-    image = ImageEnhance.Contrast(image).enhance(1.65) # this value changes things quite a bit. I think it looks best here
+    #print("Enhancing contrast")
+    #image = ImageEnhance.Contrast(image).enhance(1.65) # this value changes things quite a bit. I think it looks best here
 
-    output_path = 'images/' + filename.split('\\')[-1].split('.')[0] + '.png'
+    output_path = outputFolder + '/' + filename.split('\\')[-1].split('.')[0] + '.png'
     print(f"Writing image to {output_path}")
     image.save(output_path)
 
@@ -143,7 +143,9 @@ if __name__=='__main__':
         makedirs(recordings)
     if not path.isdir(outputRawImages):
         makedirs(outputRawImages)
+    if len(listdir(recordings)) == 0:
+        print("Place recoded APT signals in the 'recordings' folder!")
     for filename in listdir(recordings):
         print('\n')
         f = path.join(recordings, filename)
-        modified(f)
+        modified(f, outputRawImages)
