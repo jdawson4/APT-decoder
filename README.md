@@ -4,3 +4,5 @@ APT (Automatic Picture Transmission) is a radio transmission system used by weat
 Of course, there's easier ways of doing this. NOAA-APT (https://noaa-apt.mbernardi.com.ar/) is my favorite way of doing this, but others seem to prefer WXtoIMG (https://wxtoimgrestored.xyz/), which is somewhat abandoned and hard to get to work.
 
 While these are good solutions, I wanted to see how the process works by hand, in order to get some experience with scipy and digital signal processing in general. At least initially, I'm inspired by this Medium post https://medium.com/swlh/decoding-noaa-satellite-images-using-50-lines-of-code-3c5d1d0a08da by Dmitrii Eliuseev. I want to do my own take on this afterwards, though.
+
+I'll also note that I've looked at a few other projects on github, such as https://github.com/zacstewart/apt-decoder. There's a thriving little community of weather satellite decoders out there, and I hope my code contributes to this!
