@@ -94,7 +94,7 @@ def modified(filename, outputFolder):
     # the center. This column will presumably be the center of the white strip
     # down the middle which is (I think) meant to be for telemetry
     columnAvs = np.mean(data_am, axis=1).flatten()
-    darkestColumnVal = 0
+    darkestColumnVal = 255
     darkestColumnInd = 0
     i = 0
     for columnAv in columnAvs:
