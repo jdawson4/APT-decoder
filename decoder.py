@@ -38,6 +38,7 @@ def modified(filename, outputFolder):
 
     # this is complicated. It applies a median filter kernel size 5,
     # and then keeps only the signal at each 3rd position.
+    data_am = data_am[:((data_am.size // 5) * 5)] # signal's size a factor of 5
     data_am = signal.medfilt(data_am, 5)
     data_am = data_am.reshape(len(data_am) // 5, 5)[:, 3]
     fs = fs // 5
