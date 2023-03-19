@@ -86,8 +86,26 @@ def modified(filename, outputFolder):
     # this no matter what:
     data_am = np.clip(data_am, 0, 255)
 
-    print("Generating image")
+    print("Generating image array")
     data_am = np.reshape(data_am, (h, w))
+
+    print("Aligning image")
+    # the plan here is to simply find the brightest column, and then make that
+    # the center. This column will presumably be the center of the white strip
+    # down the middle which is (I think) meant to be for telemetry
+    columnAvs = np.mean(data_am, axis=1).flatten()
+    brightestColumnVal = 0
+    brightestColumnInd = 0
+    i = 0
+    for columnAv in columnAvs:
+        if columnAv > brightestColumnVal:
+            brightestColumnVal = columnAv
+            brightestColumnInd = i
+        i+=1
+    print(brightestColumnInd)
+    data_am = np.concatenate((data_am[:,brightestColumnInd:], data_am[:,:brightestColumnInd]), axis=1)
+
+    print("Creating image from array")
     image = Image.fromarray(data_am)
 
     if image.mode != "RGB":
