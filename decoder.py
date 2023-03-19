@@ -11,9 +11,6 @@ from os import listdir, path, makedirs
 
 from PIL import Image
 
-# from PIL import ImageEnhance
-
-
 def modified(filename, outputFolder):
     print("Reading", filename)
     fs, data = wav.read(filename)
@@ -60,11 +57,6 @@ def modified(filename, outputFolder):
 
     frame_width = fs // 2  # should now be 2080, if my math is correct
 
-    print(f"Limiting data to a factor of {frame_width}")
-    data_am = data_am[: (data_am.shape[0] // frame_width) * frame_width]
-
-    w, h = frame_width, data_am.shape[0] // frame_width  # shape of final img
-
     print("Determining pixel values")
     # erring on the side of caution and just saving the raw image, so let's
     # simply scale everything:
@@ -76,15 +68,19 @@ def modified(filename, outputFolder):
 
     print("Aligning signal for image")
     # https://github.com/zacstewart/apt-decoder has some great code for this,
-    # but it relies on python iteration rather than numpy functions
-    # aligning and matrixizing
+    # copying it and changing things slightly. It's very smart to make a little
+    # "example" and then compare slices of our real signal to figure out how
+    # similar the potential slice is. Unfortunately it needs to be done with
+    # some python iteration, but I don't think this is avoidable
+
+    # we compare this platonic ideal of a telemetry signal to our real data:
     syncA = [0, 128, 255, 128]*7 + [0]*7
 
     # list of maximum correlations found: (index, value)
     peaks = [(0, 0)]
 
     # minimum distance between peaks
-    mindistance = 2000
+    minDistance = 2000
 
     # need to shift the values down to get meaningful correlation values
     signalshifted = [x-128 for x in data_am]
@@ -94,28 +90,27 @@ def modified(filename, outputFolder):
 
         # if previous peak is too far, keep it and add this value to the
         # list as a new peak
-        if i - peaks[-1][0] > mindistance:
+        if i - peaks[-1][0] > minDistance:
             peaks.append((i, corr))
 
-        # else if this value is bigger than the previous maximum, set this
-        # one
+        # else if this value is bigger than the previous maximum, set this one
         elif corr > peaks[-1][1]:
             peaks[-1] = (i, corr)
 
+    print("Creating image from array")
     # create image matrix starting each line on the peaks found
     matrix = []
-    for i in range(len(peaks) - 1):
-        matrix.append(data_am[peaks[i][0] : peaks[i][0] + 2080])
+    for ind, _ in peaks:
+        row = data_am[ind : ind + frame_width]
+        if row.size != frame_width:
+            break
+        matrix.append(row)
     data_am = np.array(matrix)
 
-    print("Creating image from array")
     image = Image.fromarray(data_am)
 
     if image.mode != "RGB":
         image = image.convert("RGB")
-
-    # print("Enhancing contrast")
-    # image = ImageEnhance.Contrast(image).enhance(1.65) # this value changes things quite a bit. I think it looks best here
 
     output_path = outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
     print(f"Writing image to {output_path}")
