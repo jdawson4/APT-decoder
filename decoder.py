@@ -66,44 +66,47 @@ def modified(filename, outputFolder):
     w, h = frame_width, data_am.shape[0] // frame_width  # shape of final img
 
     print("Determining pixel values")
-    # we have a few options:
-
-    # not sure if I love this. It might filter out some noise, but we'll
-    # deliberately be clipping out useful signal.
-    # data_am = np.clip(data_am, np.percentile(data_am, 0.0), np.percentile(data_am, 90.0))
-    # these bounds matter a lot! Mess around with this ^!
-
+    # erring on the side of caution and just saving the raw image, so let's
     # simply scale everything:
     max = np.amax(data_am)
     min = np.amin(data_am)
-    data_am = ((data_am - min) / max) * 255  # scale values (0,255)
-
-    # this is how the original article does it. He says it might be better
-    # for different antennae
-    # data_am = (data_am // 32) - 32
-    # data_am = data_am // 32
-
-    # this no matter what:
+    data_am = ((data_am - min) / max) * 255  # values are in (0,255)
+    # and just to be safe:
     data_am = np.clip(data_am, 0, 255)
 
-    print("Generating image array")
-    data_am = np.reshape(data_am, (h, w))
+    print("Aligning signal for image")
+    # https://github.com/zacstewart/apt-decoder has some great code for this,
+    # but it relies on python iteration rather than numpy functions
+    # aligning and matrixizing
+    syncA = [0, 128, 255, 128]*7 + [0]*7
 
-    print("Aligning image")
-    # the plan here is to simply find the brightest column, and then make that
-    # the center. This column will presumably be the center of the white strip
-    # down the middle which is (I think) meant to be for telemetry
-    columnAvs = np.mean(data_am, axis=1).flatten()
-    darkestColumnVal = 255
-    darkestColumnInd = 0
-    i = 0
-    for columnAv in columnAvs:
-        if columnAv < darkestColumnVal:
-            darkestColumnVal = columnAv
-            darkestColumnInd = i
-        i+=1
-    print(darkestColumnInd)
-    data_am = np.concatenate((data_am[:,darkestColumnInd:], data_am[:,:darkestColumnInd]), axis=1)
+    # list of maximum correlations found: (index, value)
+    peaks = [(0, 0)]
+
+    # minimum distance between peaks
+    mindistance = 2000
+
+    # need to shift the values down to get meaningful correlation values
+    signalshifted = [x-128 for x in data_am]
+    syncA = [x-128 for x in syncA]
+    for i in range(len(data_am)-len(syncA)):
+        corr = np.dot(syncA, signalshifted[i : i+len(syncA)])
+
+        # if previous peak is too far, keep it and add this value to the
+        # list as a new peak
+        if i - peaks[-1][0] > mindistance:
+            peaks.append((i, corr))
+
+        # else if this value is bigger than the previous maximum, set this
+        # one
+        elif corr > peaks[-1][1]:
+            peaks[-1] = (i, corr)
+
+    # create image matrix starting each line on the peaks found
+    matrix = []
+    for i in range(len(peaks) - 1):
+        matrix.append(data_am[peaks[i][0] : peaks[i][0] + 2080])
+    data_am = np.array(matrix)
 
     print("Creating image from array")
     image = Image.fromarray(data_am)
