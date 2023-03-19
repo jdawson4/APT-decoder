@@ -22,20 +22,7 @@ def modified(filename, outputFolder):
     expectedRate = 20800
     if fs != expectedRate:
         print(f"Resampling from {fs} to {expectedRate}")
-
-        # pretty bad method, only works for certain imports:
-        """factor = fs // expectedRate
-        # resample to new rate:
-        data = data[::factor]
-        fs = fs // factor
-        print(f"Factor: {factor}\nNew rate: {fs}")"""
-
-        # slow, but probably more correct:
         data = signal.resample(data, int((data.shape[0] / fs) * expectedRate))
-
-        # and truncate because we have reshaping to do:
-        truncate = expectedRate * int(len(data) // expectedRate)
-        data = data[:truncate]
 
         # sample rate is now expected
         fs = expectedRate
