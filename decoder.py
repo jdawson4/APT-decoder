@@ -189,9 +189,9 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # TODO: from here, we want to improve upon our current image. Given that we
     # have two channels, perhaps we can stack them together and/or add false
     # color, improving upon our current greyscale raw imgs.
-    
+
     # let's just see what overlaying the two channels does for now
-    stackedImg = img[:,:1040] + img[:,1040:]
+    stackedImg = img[:, :1040] + img[:, 1040:]
     saveImg(stackedImg, outputFalseColorImages, filename)
 
 
