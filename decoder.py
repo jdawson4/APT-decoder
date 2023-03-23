@@ -11,15 +11,24 @@ from os import listdir, path, makedirs
 
 from PIL import Image
 
+def readFile(filename):
+    # this function takes a .wav file and returns its frequency and data.
+    # Because we only need the signal in mono, we only return one channel if
+    # the given recording has stereo sound.
 
-def modified(filename, outputFolder):
     print("Reading", filename)
     fs, data = wav.read(filename)
     if len(data.shape) == 2:
         print(f"Data in two channels, using the first one")
         data = data[:, 0]  # only need 1 channel
 
-    # we worry first about sample rate:
+    return fs, data
+
+def resample(fs, data):
+    # this function uses scipy's resample function to resample a signal
+    # into the correct sample rate. Normally this will be a downsample,
+    # so don't worry about any aliasing issues or whatever
+
     expectedRate = 20800
     if fs != expectedRate:
         print(f"Resampling from {fs} to {expectedRate}")
@@ -30,21 +39,35 @@ def modified(filename, outputFolder):
     else:
         print(f"No need to resample, recording is already at {fs}")
 
-    def hilbert(data):
-        analytical_signal = signal.hilbert(data)
-        amplitude_envelope = np.abs(analytical_signal)
-        return amplitude_envelope
+    return fs, data
 
-    data_am = hilbert(data)
+def hilbert(data):
+    # This function performs the hilbert transform and returns its absolute
+    # value on our data. Scipy has a good visualization of this at the bottom
+    # of the page:
+    # https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.hilbert.html
 
-    # this is complicated. It applies a median filter kernel size 5,
+    analytical_signal = signal.hilbert(data)
+    amplitude_envelope = np.abs(analytical_signal)
+
+    return amplitude_envelope
+
+def kernelFilter(fs, data_am):
+    # this applies a median filter kernel size 5,
     # and then keeps only the signal at each 3rd position.
+
     data_am = data_am[: ((data_am.size // 5) * 5)]  # signal's size a factor of 5
     data_am = signal.medfilt(data_am, 5)
     data_am = data_am.reshape(len(data_am) // 5, 5)[:, 3]
     fs = fs // 5
 
-    frame_width = fs // 2  # should now be 2080, if my math is correct
+    return fs, data_am
+
+def toGreyscaleImgValues(data_am):
+    # this function simply normalizes our raw data into a range of (0,255),
+    # the range of a greyscale image. Note that data_am, both given and
+    # returned, is expected to be in the shape (x,), that is a one-dimensional
+    # array. However, I think it *should* work otherwise.
 
     print("Determining pixel values")
     # erring on the side of caution and just saving the raw image, so let's
@@ -54,6 +77,12 @@ def modified(filename, outputFolder):
     data_am = ((data_am - min) / max) * 255  # values are in (0,255)
     # and just to be safe:
     data_am = np.clip(data_am, 0, 255)
+
+    return data_am
+
+def alignSignal(data_am):
+    # this function takes the signal and returns data on how the signal ought
+    # to be aligned.
 
     print("Aligning signal for image")
     # https://github.com/zacstewart/apt-decoder has some great code for this,
@@ -85,6 +114,13 @@ def modified(filename, outputFolder):
         # else if this value is bigger than the previous maximum, set this one
         elif corr > peaks[-1][1]:
             peaks[-1] = (i, corr)
+    
+    return peaks
+
+def createGreyscaleImg(data_am, peaks, frame_width):
+    # given a signal with shape (x,) and some info on how wide the image is
+    # expected to be and how the signal ought to be aligned, create an aligned
+    # greyscale image and return it.
 
     print("Creating image from array")
     # create image matrix starting each line on the peaks found
@@ -94,9 +130,15 @@ def modified(filename, outputFolder):
         if row.size != frame_width:
             break
         matrix.append(row)
-    data_am = np.array(matrix)
+    img = np.array(matrix)
 
-    image = Image.fromarray(data_am)
+    return img
+
+def saveImg(img, outputFolder, filename):
+    # this function simply takes an ndarray which may be greyscale or RGB and
+    # saves it to a png file
+
+    image = Image.fromarray(img)
 
     if image.mode != "RGB":
         image = image.convert("RGB")
@@ -105,11 +147,27 @@ def modified(filename, outputFolder):
     print(f"Writing image to {output_path}")
     image.save(output_path)
 
+def process(filename, outputFolder):
+    fs, data = readFile(filename)
+
+    fs, data = resample(fs, data)
+
+    data_am = hilbert(data)
+
+    fs, data_am = kernelFilter(fs, data_am)
+
+    frame_width = fs // 2  # should now be 2080, if my math is correct
+
+    data_am = toGreyscaleImgValues(data_am)
+
+    peaks = alignSignal(data_am)
+
+    img = createGreyscaleImg(data_am, peaks, frame_width)
+
+    saveImg(img, outputFolder, filename)
+
 
 if __name__ == "__main__":
-    # filename = 'recordings/noaa18-march-9.wav'
-    # original(filename)
-    # modified(filename)
     recordings = "recordings"
     outputRawImages = "rawImages"
     if not path.isdir(recordings):
@@ -121,4 +179,4 @@ if __name__ == "__main__":
     for filename in listdir(recordings):
         print("\n")
         f = path.join(recordings, filename)
-        modified(f, outputRawImages)
+        process(f, outputRawImages)
