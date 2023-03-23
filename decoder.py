@@ -10,6 +10,7 @@ from os import listdir, path, makedirs
 
 from PIL import Image
 
+
 def readFile(filename):
     # this function takes a .wav file and returns its frequency and data.
     # Because we only need the signal in mono, we only return one channel if
@@ -22,6 +23,7 @@ def readFile(filename):
         data = data[:, 0]  # only need 1 channel
 
     return fs, data
+
 
 def resample(fs, data):
     # this function uses scipy's resample function to resample a signal
@@ -40,6 +42,7 @@ def resample(fs, data):
 
     return fs, data
 
+
 def hilbert(data):
     # This function performs the hilbert transform and returns its absolute
     # value on our data. Scipy has a good visualization of this at the bottom
@@ -51,6 +54,7 @@ def hilbert(data):
 
     return amplitude_envelope
 
+
 def kernelFilter(fs, data_am):
     # this applies a median filter kernel size 5,
     # and then keeps only the signal at each 3rd position.
@@ -61,6 +65,7 @@ def kernelFilter(fs, data_am):
     fs = fs // 5
 
     return fs, data_am
+
 
 def toGreyscaleImgValues(data_am):
     # this function simply normalizes our raw data into a range of (0,255),
@@ -78,6 +83,7 @@ def toGreyscaleImgValues(data_am):
     data_am = np.clip(data_am, 0, 255)
 
     return data_am
+
 
 def alignSignal(data_am):
     # this function takes the signal and returns data on how the signal ought
@@ -113,8 +119,9 @@ def alignSignal(data_am):
         # else if this value is bigger than the previous maximum, set this one
         elif corr > peaks[-1][1]:
             peaks[-1] = (i, corr)
-    
+
     return peaks
+
 
 def createGreyscaleImg(data_am, peaks, frame_width):
     # given a signal with shape (x,) and some info on how wide the image is
@@ -133,6 +140,7 @@ def createGreyscaleImg(data_am, peaks, frame_width):
 
     return img
 
+
 def saveImg(img, outputFolder, filename):
     # this function simply takes an ndarray which may be greyscale or RGB and
     # saves it to a png file
@@ -145,6 +153,7 @@ def saveImg(img, outputFolder, filename):
     output_path = outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
     print(f"Writing image to {output_path}")
     image.save(output_path)
+
 
 def process(filename, outputFolderRawImgs, outputfalseColorImages):
     # the "main" function. Given a filename and an expected output folder, this
@@ -177,7 +186,7 @@ def process(filename, outputFolderRawImgs, outputfalseColorImages):
     # let's save that greyscale to a file, call it rawImages
     saveImg(img, outputFolderRawImgs, filename)
 
-    #TODO: from here, we want to improve upon our current image. Given that we
+    # TODO: from here, we want to improve upon our current image. Given that we
     # have two channels, perhaps we can stack them together and/or add false
     # color, improving upon our current greyscale raw imgs.
 
