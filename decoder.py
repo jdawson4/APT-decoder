@@ -1,8 +1,7 @@
 # Author: Jacob Dawson
 #
-# This file does the decoding of an already-resampled (?) APT recording.
+# This file does the decoding of an APT recording.
 
-# just going to copy the Medium post by Dmitrii Eliuseev to begin with
 import scipy.io.wavfile as wav
 import scipy.signal as signal
 import numpy as np
@@ -147,29 +146,46 @@ def saveImg(img, outputFolder, filename):
     print(f"Writing image to {output_path}")
     image.save(output_path)
 
-def process(filename, outputFolder):
+def process(filename, outputFolderRawImgs, outputfalseColorImages):
+    # the "main" function. Given a filename and an expected output folder, this
+    # function calls the above functions to turn the given .wav file into an
+    # image from a weather sat!
+
+    # read the given file:
     fs, data = readFile(filename)
 
+    # resample to 20800
     fs, data = resample(fs, data)
 
+    # perform hilbert transform
     data_am = hilbert(data)
 
+    # kernel filter, reducing sample rate and improving signal (?)
     fs, data_am = kernelFilter(fs, data_am)
 
     frame_width = fs // 2  # should now be 2080, if my math is correct
 
+    # transform values into the range (0, 255)
     data_am = toGreyscaleImgValues(data_am)
 
+    # determine how to align image
     peaks = alignSignal(data_am)
 
+    # turn signal into a 2D ndarray based on the alignment numbers above
     img = createGreyscaleImg(data_am, peaks, frame_width)
 
-    saveImg(img, outputFolder, filename)
+    # let's save that greyscale to a file, call it rawImages
+    saveImg(img, outputFolderRawImgs, filename)
+
+    #TODO: from here, we want to improve upon our current image. Given that we
+    # have two channels, perhaps we can stack them together and/or add false
+    # color, improving upon our current greyscale raw imgs.
 
 
 if __name__ == "__main__":
     recordings = "recordings"
     outputRawImages = "rawImages"
+    outputfalseColorImages = "falseColorImages"
     if not path.isdir(recordings):
         makedirs(recordings)
     if not path.isdir(outputRawImages):
@@ -179,4 +195,4 @@ if __name__ == "__main__":
     for filename in listdir(recordings):
         print("\n")
         f = path.join(recordings, filename)
-        process(f, outputRawImages)
+        process(f, outputRawImages, outputfalseColorImages)
