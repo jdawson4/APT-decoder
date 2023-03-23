@@ -155,7 +155,7 @@ def saveImg(img, outputFolder, filename):
     image.save(output_path)
 
 
-def process(filename, outputFolderRawImgs, outputfalseColorImages):
+def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # the "main" function. Given a filename and an expected output folder, this
     # function calls the above functions to turn the given .wav file into an
     # image from a weather sat!
@@ -189,19 +189,25 @@ def process(filename, outputFolderRawImgs, outputfalseColorImages):
     # TODO: from here, we want to improve upon our current image. Given that we
     # have two channels, perhaps we can stack them together and/or add false
     # color, improving upon our current greyscale raw imgs.
+    
+    # let's just see what overlaying the two channels does for now
+    stackedImg = img[:,:1040] + img[:,1040:]
+    saveImg(stackedImg, outputFalseColorImages, filename)
 
 
 if __name__ == "__main__":
     recordings = "recordings"
     outputRawImages = "rawImages"
-    outputfalseColorImages = "falseColorImages"
+    outputFalseColorImages = "falseColorImages"
     if not path.isdir(recordings):
         makedirs(recordings)
     if not path.isdir(outputRawImages):
         makedirs(outputRawImages)
+    if not path.isdir(outputFalseColorImages):
+        makedirs(outputFalseColorImages)
     if len(listdir(recordings)) == 0:
         print("Place recoded APT signals in the 'recordings' folder!")
     for filename in listdir(recordings):
         print("\n")
         f = path.join(recordings, filename)
-        process(f, outputRawImages, outputfalseColorImages)
+        process(f, outputRawImages, outputFalseColorImages)
