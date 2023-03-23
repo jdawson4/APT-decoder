@@ -145,7 +145,17 @@ def saveImg(img, outputFolder, filename):
     # this function simply takes an ndarray which may be greyscale or RGB and
     # saves it to a png file
 
-    image = Image.fromarray(img)
+    # first, we want to change the image from 32-bit floats to 8-bit integers:
+    img = img.astype(np.int8)
+
+    if len(img.shape) == 2:
+        image = Image.fromarray(img, mode="L")
+        #print(f"IMAGE MODE IS {image.mode}")
+    elif len(img.shape) == 3:
+        image = Image.fromarray(img, mode="RGB")
+    else:
+        print("Unknown format, cannot save image")
+        return # dunno!
 
     if image.mode != "RGB":
         image = image.convert("RGB")
@@ -189,9 +199,14 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # TODO: from here, we want to improve upon our current image. Given that we
     # have two channels, perhaps we can stack them together and/or add false
     # color, improving upon our current greyscale raw imgs.
+    print("Combining channels and creating a false color image")
+    chA = img[:, :1040]
+    chB = img[:, 1040:]
+    blankChannel = np.zeros(chA.shape)
 
     # let's just see what overlaying the two channels does for now
-    stackedImg = img[:, :1040] + img[:, 1040:]
+    stackedImg = np.stack((chB*0.75, chA*0.9, chA*0.9), axis=-1)
+    stackedImg = toGreyscaleImgValues(stackedImg)
     saveImg(stackedImg, outputFalseColorImages, filename)
 
 
