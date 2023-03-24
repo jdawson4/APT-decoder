@@ -150,12 +150,12 @@ def saveImg(img, outputFolder, filename):
 
     if len(img.shape) == 2:
         image = Image.fromarray(img, mode="L")
-        #print(f"IMAGE MODE IS {image.mode}")
     elif len(img.shape) == 3:
         image = Image.fromarray(img, mode="RGB")
     else:
         print("Unknown format, cannot save image")
-        return # dunno!
+        return
+        # dunno!
 
     if image.mode != "RGB":
         image = image.convert("RGB")
@@ -205,7 +205,7 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     blankChannel = np.zeros(chA.shape)
 
     # let's just see what overlaying the two channels does for now
-    stackedImg = np.stack((chB*0.75, chA*0.9, chA*0.9), axis=-1)
+    stackedImg = np.stack((chB * 0.75, chA * 0.9, chA * 0.9), axis=-1)
     stackedImg = toGreyscaleImgValues(stackedImg)
     saveImg(stackedImg, outputFalseColorImages, filename)
 
