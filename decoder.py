@@ -67,7 +67,7 @@ def kernelFilter(fs, data_am):
     return fs, data_am
 
 
-def toGreyscaleImgValues(data_am):
+def toImgValues(data_am):
     # this function simply normalizes our raw data into a range of (0,255),
     # the range of a greyscale image. Note that data_am, both given and
     # returned, is expected to be in the shape (x,), that is a one-dimensional
@@ -185,7 +185,7 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     frame_width = fs // 2  # should now be 2080, if my math is correct
 
     # transform values into the range (0, 255)
-    data_am = toGreyscaleImgValues(data_am)
+    data_am = toImgValues(data_am)
 
     # determine how to align image
     peaks = alignSignal(data_am)
@@ -196,9 +196,6 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # let's save that greyscale to a file, call it rawImages
     saveImg(img, outputFolderRawImgs, filename)
 
-    # TODO: from here, we want to improve upon our current image. Given that we
-    # have two channels, perhaps we can stack them together and/or add false
-    # color, improving upon our current greyscale raw imgs.
     print("Combining channels and creating a false color image")
     chA = img[:, :1040]
     chB = img[:, 1040:]
@@ -206,7 +203,7 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
 
     # let's just see what overlaying the two channels does for now
     stackedImg = np.stack((chB * 0.75, chA * 0.9, chA * 0.9), axis=-1)
-    stackedImg = toGreyscaleImgValues(stackedImg)
+    stackedImg = toImgValues(stackedImg)
     saveImg(stackedImg, outputFalseColorImages, filename)
 
 
