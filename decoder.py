@@ -202,7 +202,7 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     blankChannel = np.zeros(chA.shape)
 
     # let's just see what overlaying the two channels does for now
-    stackedImg = np.stack((chB * 0.75, chA * 0.9, chA * 0.9), axis=-1)
+    stackedImg = np.stack((chB * 0.75, (chA + chB) * 0.4, chA * 0.9), axis=-1)
     stackedImg = toImgValues(stackedImg)
     saveImg(stackedImg, outputFalseColorImages, filename)
 
