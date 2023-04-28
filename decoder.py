@@ -9,6 +9,7 @@ import numpy as np
 from os import listdir, path, makedirs
 
 from PIL import Image
+from PIL.ImageOps import autocontrast
 
 
 def readFile(filename):
@@ -141,7 +142,7 @@ def createGreyscaleImg(data_am, peaks, frame_width):
     return img
 
 
-def saveImg(img, outputFolder, filename):
+def saveImg(img, outputFolder, filename, enhanceContrast=False):
     # this function simply takes an ndarray which may be greyscale or RGB and
     # saves it to a png file
 
@@ -159,6 +160,9 @@ def saveImg(img, outputFolder, filename):
 
     if image.mode != "RGB":
         image = image.convert("RGB")
+
+    if enhanceContrast:
+        image = autocontrast(image)
 
     output_path = outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
     print(f"Writing image to {output_path}")
@@ -202,9 +206,9 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     blankChannel = np.zeros(chA.shape)
 
     # let's just see what overlaying the two channels does for now
-    stackedImg = np.stack((chB * 0.75, (chA + chB) * 0.4, chA * 0.9), axis=-1)
+    stackedImg = np.stack((chA*1.5, (chA*.7)+(chB*.3), chB*0.5), axis=-1)
     stackedImg = toImgValues(stackedImg)
-    saveImg(stackedImg, outputFalseColorImages, filename)
+    saveImg(stackedImg, outputFalseColorImages, filename, enhanceContrast=True)
 
 
 if __name__ == "__main__":
