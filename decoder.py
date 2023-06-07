@@ -60,7 +60,9 @@ def kernelFilter(fs, data_am):
     # this applies a median filter kernel size 5,
     # and then keeps only the signal at each 3rd position.
 
-    data_am = data_am[: ((data_am.size // 5) * 5)]  # signal's size a factor of 5
+    data_am = data_am[
+        : ((data_am.size // 5) * 5)
+    ]  # signal's size a factor of 5
     data_am = signal.medfilt(data_am, 5)
     data_am = data_am.reshape(len(data_am) // 5, 5)[:, 3]
     fs = fs // 5
@@ -164,7 +166,9 @@ def saveImg(img, outputFolder, filename, enhanceContrast=False):
     if enhanceContrast:
         image = autocontrast(image)
 
-    output_path = outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
+    output_path = (
+        outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
+    )
     print(f"Writing image to {output_path}")
     image.save(output_path)
 
@@ -202,7 +206,9 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     chB = img[:, 1040:]
 
     # let's just see what overlaying the two channels does for now
-    stackedImg = np.stack((chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1)
+    stackedImg = np.stack(
+        (chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1
+    )
     stackedImg = toImgValues(stackedImg)
     saveImg(stackedImg, outputFalseColorImages, filename, enhanceContrast=True)
 
