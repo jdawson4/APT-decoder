@@ -188,9 +188,6 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
 
     frame_width = fs // 2  # should now be 2080, if my math is correct
 
-    # transform values into the range (0, 255)
-    data_am = toImgValues(data_am)
-
     # determine how to align image
     peaks = alignSignal(data_am)
 
@@ -198,12 +195,11 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     img = createGreyscaleImg(data_am, peaks, frame_width)
 
     # let's save that greyscale to a file, call it rawImages
-    saveImg(img, outputFolderRawImgs, filename)
+    saveImg(toImgValues(img), outputFolderRawImgs, filename)
 
     print("Combining channels and creating a false color image")
     chA = img[:, :1040]
     chB = img[:, 1040:]
-    blankChannel = np.zeros(chA.shape)
 
     # let's just see what overlaying the two channels does for now
     stackedImg = np.stack((chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1)
