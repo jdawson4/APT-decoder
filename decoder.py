@@ -178,12 +178,55 @@ def createFalseColorImg(greyscaleImg):
     chA = greyscaleImg[:, :1040]
     chB = greyscaleImg[:, 1040:]
 
-    # let's just see what overlaying the two channels does for now
+    # let's just see what overlaying the two channels does for now. Maybe we
+    # add them together with some constants multiplying?
     stackedImg = np.stack(
         (chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1
     )
     stackedImg = toImgValues(stackedImg)
     return stackedImg
+
+    """
+    # found this solution here:
+    # https://github.com/enigmastrat/apt137
+    # It's intriguing, but maybe their setup is slightly different, because it
+    # doesn't quite work. Maybe I just need to tweak the values.
+    stackedImg = np.stack((chA, chB), axis=-1)
+    colorizedImg = []
+    for i in stackedImg:
+        colorizedLine = []
+        for colVal, irVal in i:
+            if colVal < 13000:
+                # if water:
+                r = (8*256) + colVal * .2
+                g = (20*256) + colVal * 1
+                b = (50*256) + colVal * .75
+            elif irVal > 35000:
+                # if cloud/ice/snow:
+                r = (irVal+colVal)/2 # Average the two for a little better cloud distinction
+                g = r
+                b = r
+            elif colVal < 27000:
+                # if vegetation:
+                r = colVal * .8
+                g = colVal * .9
+                b = colVal * .6
+            elif colVal <= 35000:
+                # if dirt/desert/brown:
+                r = colVal * 1
+                g = colVal * .9
+                b = colVal * .7
+            else:
+                # Everything else, but this was probably captured by the IR channel above
+                r = colVal
+                g = colVal
+                b = colVal
+            colorizedLine.append([r,g,b])
+        colorizedImg.append(colorizedLine)
+    colorizedImg = np.array(colorizedImg)
+    colorizedImg = toImgValues(colorizedImg)
+    return colorizedImg
+    """
 
 
 def process(filename, outputFolderRawImgs, outputFalseColorImages):
