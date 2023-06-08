@@ -173,6 +173,19 @@ def saveImg(img, outputFolder, filename, enhanceContrast=False):
     image.save(output_path)
 
 
+def createFalseColorImg(greyscaleImg):
+    print("Combining channels and creating a false color image")
+    chA = greyscaleImg[:, :1040]
+    chB = greyscaleImg[:, 1040:]
+
+    # let's just see what overlaying the two channels does for now
+    stackedImg = np.stack(
+        (chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1
+    )
+    stackedImg = toImgValues(stackedImg)
+    return stackedImg
+
+
 def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # the "main" function. Given a filename and an expected output folder, this
     # function calls the above functions to turn the given .wav file into an
@@ -201,16 +214,10 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     # let's save that greyscale to a file, call it rawImages
     saveImg(toImgValues(img), outputFolderRawImgs, filename)
 
-    print("Combining channels and creating a false color image")
-    chA = img[:, :1040]
-    chB = img[:, 1040:]
-
-    # let's just see what overlaying the two channels does for now
-    stackedImg = np.stack(
-        (chA * 1.5, (chA * 0.7) + (chB * 0.3), chB * 0.5), axis=-1
+    falseColorImg = createFalseColorImg(img)
+    saveImg(
+        falseColorImg, outputFalseColorImages, filename, enhanceContrast=True
     )
-    stackedImg = toImgValues(stackedImg)
-    saveImg(stackedImg, outputFalseColorImages, filename, enhanceContrast=True)
 
 
 if __name__ == "__main__":
