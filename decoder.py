@@ -60,9 +60,7 @@ def kernelFilter(fs, data_am):
     # this applies a median filter kernel size 5,
     # and then keeps only the signal at each 3rd position.
 
-    data_am = data_am[
-        : ((data_am.size // 5) * 5)
-    ]  # signal's size a factor of 5
+    data_am = data_am[: ((data_am.size // 5) * 5)]  # signal's size a factor of 5
     data_am = signal.medfilt(data_am, 5)
     data_am = data_am.reshape(len(data_am) // 5, 5)[:, 3]
     fs = fs // 5
@@ -166,9 +164,7 @@ def saveImg(img, outputFolder, filename, enhanceContrast=False):
     if enhanceContrast:
         image = autocontrast(image)
 
-    output_path = (
-        outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
-    )
+    output_path = outputFolder + "/" + filename.split("\\")[-1].split(".")[0] + ".png"
     print(f"Writing image to {output_path}")
     image.save(output_path)
 
@@ -178,6 +174,7 @@ def createFalseColorImg(greyscaleImg):
     chA = greyscaleImg[:, :1040]
     chB = greyscaleImg[:, 1040:]
 
+    """
     # let's just see what overlaying the two channels does for now. Maybe we
     # add them together with some constants multiplying?
     stackedImg = np.stack(
@@ -185,48 +182,53 @@ def createFalseColorImg(greyscaleImg):
     )
     stackedImg = toImgValues(stackedImg)
     return stackedImg
-
     """
+
     # found this solution here:
     # https://github.com/enigmastrat/apt137
     # It's intriguing, but maybe their setup is slightly different, because it
     # doesn't quite work. Maybe I just need to tweak the values.
     stackedImg = np.stack((chA, chB), axis=-1)
     colorizedImg = []
+    waterThreshold = np.percentile(chA, 0.55)
+    vegThreshold = np.percentile(chA, 0.65)
+    dirtThreshold = np.percentile(chA, 0.65)
+    cloudThreshold = np.percentile(chB, 0.85)
     for i in stackedImg:
         colorizedLine = []
         for colVal, irVal in i:
-            if colVal < 13000:
+            if colVal < waterThreshold:
                 # if water:
-                r = (8*256) + colVal * .2
-                g = (20*256) + colVal * 1
-                b = (50*256) + colVal * .75
-            elif irVal > 35000:
+                r = (8 * 256) + colVal * 0.2
+                g = (20 * 256) + colVal * 1
+                b = (50 * 256) + colVal * 0.75
+            elif irVal > cloudThreshold:
                 # if cloud/ice/snow:
-                r = (irVal+colVal)/2 # Average the two for a little better cloud distinction
+                r = (
+                    irVal + colVal
+                ) / 2  # Average the two for a little better cloud distinction
                 g = r
                 b = r
-            elif colVal < 27000:
+            elif colVal < vegThreshold:
                 # if vegetation:
-                r = colVal * .8
-                g = colVal * .9
-                b = colVal * .6
-            elif colVal <= 35000:
+                r = colVal * 0.8
+                g = colVal * 0.9
+                b = colVal * 0.6
+            elif colVal <= dirtThreshold:
                 # if dirt/desert/brown:
                 r = colVal * 1
-                g = colVal * .9
-                b = colVal * .7
+                g = colVal * 0.9
+                b = colVal * 0.7
             else:
                 # Everything else, but this was probably captured by the IR channel above
                 r = colVal
                 g = colVal
                 b = colVal
-            colorizedLine.append([r,g,b])
+            colorizedLine.append([r, g, b])
         colorizedImg.append(colorizedLine)
     colorizedImg = np.array(colorizedImg)
     colorizedImg = toImgValues(colorizedImg)
     return colorizedImg
-    """
 
 
 def process(filename, outputFolderRawImgs, outputFalseColorImages):
@@ -258,9 +260,7 @@ def process(filename, outputFolderRawImgs, outputFalseColorImages):
     saveImg(toImgValues(img), outputFolderRawImgs, filename)
 
     falseColorImg = createFalseColorImg(img)
-    saveImg(
-        falseColorImg, outputFalseColorImages, filename, enhanceContrast=True
-    )
+    saveImg(falseColorImg, outputFalseColorImages, filename, enhanceContrast=True)
 
 
 if __name__ == "__main__":
