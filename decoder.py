@@ -190,10 +190,15 @@ def createFalseColorImg(greyscaleImg):
     # doesn't quite work. Maybe I just need to tweak the values.
     stackedImg = np.stack((chA, chB), axis=-1)
     colorizedImg = []
-    waterThreshold = np.percentile(chA, 0.55)
-    vegThreshold = np.percentile(chA, 0.65)
-    dirtThreshold = np.percentile(chA, 0.65)
-    cloudThreshold = np.percentile(chB, 0.85)
+    waterThreshold = np.median(chA) * 0.45
+    vegThreshold = np.median(chA) * 1.0
+    dirtThreshold = np.median(chA) * 1.3
+    cloudThreshold = np.median(chB) * 1.45
+    waterPixels = 0
+    cloudPixels = 0
+    vegPixels = 0
+    dirtPixels = 0
+    normalPixels = 0
     for i in stackedImg:
         colorizedLine = []
         for colVal, irVal in i:
@@ -202,30 +207,43 @@ def createFalseColorImg(greyscaleImg):
                 r = (8 * 256) + colVal * 0.2
                 g = (20 * 256) + colVal * 1
                 b = (50 * 256) + colVal * 0.75
+                waterPixels += 1
             elif irVal > cloudThreshold:
                 # if cloud/ice/snow:
                 r = (
-                    irVal + colVal
-                ) / 2  # Average the two for a little better cloud distinction
+                    (irVal + colVal) / 2
+                ) * 1.25  # Average the two for a little better cloud distinction
                 g = r
                 b = r
+                cloudPixels += 1
             elif colVal < vegThreshold:
                 # if vegetation:
-                r = colVal * 0.8
-                g = colVal * 0.9
-                b = colVal * 0.6
+                r = colVal * 0.9
+                g = colVal * 1
+                b = colVal * 0.7
+                vegPixels += 1
             elif colVal <= dirtThreshold:
                 # if dirt/desert/brown:
-                r = colVal * 1
+                r = colVal * 1.1
                 g = colVal * 0.9
                 b = colVal * 0.7
+                dirtPixels += 1
             else:
                 # Everything else, but this was probably captured by the IR channel above
                 r = colVal
                 g = colVal
                 b = colVal
+                normalPixels += 1
             colorizedLine.append([r, g, b])
         colorizedImg.append(colorizedLine)
+
+    totalPixels = waterPixels + cloudPixels + vegPixels + dirtPixels + normalPixels
+    print(f"Water: {round(100*(waterPixels/totalPixels), 2)}%")
+    print(f"Cloud: {round(100*(cloudPixels/totalPixels), 2)}%")
+    print(f"Vegetation: {round(100*(vegPixels/totalPixels), 2)}%")
+    print(f"Dirt: {round(100*(dirtPixels/totalPixels), 2)}%")
+    print(f"Other: {round(100*(normalPixels/totalPixels), 2)}%")
+
     colorizedImg = np.array(colorizedImg)
     colorizedImg = toImgValues(colorizedImg)
     return colorizedImg
